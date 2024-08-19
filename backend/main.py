@@ -342,7 +342,6 @@ async def get_function_call_response(
                 await response.background()
         else:
             content = response["choices"][0]["message"]["content"]
-            print(content)
 
         if content is None:
             return None, None, False
@@ -719,12 +718,15 @@ class ChatCompletionMiddleware(BaseHTTPMiddleware):
                         self.ollama_stream_wrapper(response.body_iterator, data_items),
                     )
 
+                print(response)
                 return response
             else:
+                print(response)
                 return response
 
         # If it's not a chat completion request, just pass it through
         response = await call_next(request)
+        print(response)
         return response
 
     async def _receive(self, body: bytes):
