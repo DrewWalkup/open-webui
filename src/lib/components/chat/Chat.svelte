@@ -805,7 +805,7 @@
 		await tick();
 
 		const [res, controller] = await generateChatCompletion(localStorage.token, {
-			stream: true,
+			stream: false,
 			model: model.id,
 			messages: messagesBody,
 			options: {

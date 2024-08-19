@@ -718,15 +718,12 @@ class ChatCompletionMiddleware(BaseHTTPMiddleware):
                         self.ollama_stream_wrapper(response.body_iterator, data_items),
                     )
 
-                print(response)
                 return response
             else:
-                print(response)
                 return response
 
         # If it's not a chat completion request, just pass it through
         response = await call_next(request)
-        print(response)
         return response
 
     async def _receive(self, body: bytes):
