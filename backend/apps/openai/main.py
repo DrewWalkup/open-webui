@@ -381,7 +381,9 @@ async def generate_chat_completion(
     model_id = form_data.get("model")
     model_info = Models.get_model_by_id(model_id)
 
+    # Change payload to not stream so we can print the response
     payload["stream"] = False
+    # Claude prompt caching BETA 
 
     is_claude_model = model_id.startswith("claude-")
 
@@ -466,8 +468,10 @@ async def generate_chat_completion(
             headers=headers,
         )
 
+        # Print the payload and headers for debugging
         print(payload)
         print(headers)
+        # Claude prompt caching BETA 
 
         r.raise_for_status()
 
@@ -484,7 +488,9 @@ async def generate_chat_completion(
             )
         else:
             response_data = await r.json()
+            # Print the response for debugging
             print(response_data)
+            # Claude prompt caching BETA 
             return response_data
     except Exception as e:
         log.exception(e)
