@@ -479,7 +479,6 @@ async def generate_chat_completion(
             )
         else:
             response_data = await r.json()
-            print(response_data)
             return response_data
     except Exception as e:
         log.exception(e)

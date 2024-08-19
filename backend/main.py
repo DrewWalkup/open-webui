@@ -706,13 +706,18 @@ class ChatCompletionMiddleware(BaseHTTPMiddleware):
             ]
 
             response = await call_next(request)
+            
             if isinstance(response, StreamingResponse):
                 # If it's a streaming response, inject it as SSE event or NDJSON line
                 content_type = response.headers.get("Content-Type")
                 if "text/event-stream" in content_type:
-                    return StreamingResponse(
-                        self.openai_stream_wrapper(response.body_iterator, data_items),
-                    )
+                    # Debug: Print the stream content
+                    print("Debug - OpenAI Stream Response:")
+                    debug_stream = self.debug_openai_stream_wrapper(response.body_iterator, data_items)
+                    return StreamingResponse(debug_stream, media_type=content_type)
+                    #return StreamingResponse(
+                    #    self.openai_stream_wrapper(response.body_iterator, data_items),
+                    #)
                 if "application/x-ndjson" in content_type:
                     return StreamingResponse(
                         self.ollama_stream_wrapper(response.body_iterator, data_items),
@@ -741,6 +746,17 @@ class ChatCompletionMiddleware(BaseHTTPMiddleware):
             yield f"{json.dumps(item)}\n"
 
         async for data in original_generator:
+            yield data
+
+
+    async def debug_openai_stream_wrapper(self, original_generator, data_items):
+        for item in data_items:
+            chunk = f"data: {json.dumps(item)}\n\n"
+            print(chunk, end='')
+            yield chunk
+    
+        async for data in original_generator:
+            print(data, end='')
             yield data
 
 
