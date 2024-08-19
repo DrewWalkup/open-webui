@@ -342,6 +342,7 @@ async def get_function_call_response(
                 await response.background()
         else:
             content = response["choices"][0]["message"]["content"]
+            print(content)
 
         if content is None:
             return None, None, False
