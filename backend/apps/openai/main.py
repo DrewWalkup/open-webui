@@ -375,6 +375,8 @@ async def generate_chat_completion(
     idx = 0
     payload = {**form_data}
 
+    print(payload)
+
     if "metadata" in payload:
         del payload["metadata"]
 
@@ -463,6 +465,9 @@ async def generate_chat_completion(
             data=payload,
             headers=headers,
         )
+
+        print(payload)
+        print(headers)
 
         r.raise_for_status()
 
