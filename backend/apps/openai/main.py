@@ -1,3 +1,8 @@
+# Rudown Imports
+import tiktoken
+
+# Rundown Imports
+
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, FileResponse
@@ -206,6 +211,16 @@ async def cleanup_response(
         await session.close()
 
 
+def get_tokens(text):
+    """
+    Function to get total # of tokens in a given message.
+    """
+    encoding = tiktoken.encoding_for_model("gpt-4o")
+    system_tokens = len(encoding.encode(text))
+
+    return system_tokens
+
+
 def merge_models_lists(model_lists):
     log.debug(f"merge_models_lists {model_lists}")
     merged_list = []
@@ -366,6 +381,31 @@ async def generate_chat_completion(
     model_id = form_data.get("model")
     model_info = Models.get_model_by_id(model_id)
 
+    is_claude_model = model_id.startswith("claude-")
+
+    if is_claude_model:
+        cached_messages = []
+        for msg in payload.get("messages", []):
+            msg_tokens = get_tokens(msg.get("content", ""))
+
+            cached_msg = {
+                "role": msg["role"],
+                "content": [{"type": "text", "text": msg["content"]}],
+            }
+
+            if msg_tokens >= 1024:
+                cached_msg["content"][0]["cache_control"] = {"type": "ephemeral"}
+
+            cached_messages.append(cached_msg)
+
+        payload["messages"] = cached_messages
+
+        # Add Claude-specific headers
+        payload["extra_headers"] = {
+            "anthropic-version": "2023-06-01",
+            "anthropic-beta": "prompt-caching-2024-07-31",
+        }
+
     if model_info:
         if model_info.base_model_id:
             payload["model"] = model_info.base_model_id
@@ -399,6 +439,15 @@ async def generate_chat_completion(
     if "openrouter.ai" in app.state.config.OPENAI_API_BASE_URLS[idx]:
         headers["HTTP-Referer"] = "https://openwebui.com/"
         headers["X-Title"] = "Open WebUI"
+
+    # Add Claude-specific headers if applicable
+    if is_claude_model:
+        headers.update(
+            {
+                "anthropic-version": "2023-06-01",
+                "anthropic-beta": "prompt-caching-2024-07-31",
+            }
+        )
 
     r = None
     session = None
